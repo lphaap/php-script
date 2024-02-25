@@ -1,0 +1,32 @@
+
+name: php-script
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    volumes:
+        - "./nginx.conf:/etc/nginx/conf.d/default.conf"
+        - "../src:/var/www/php-script"
+    restart: always
+    environment:
+      - NGINX_HOST=localhost
+    ports:
+      - "8000:8000"
+    networks:
+      - docker-vpc
+    depends_on:
+      - php-fpm
+
+  php-fpm:
+    image: php:8.3-fpm
+    container_name: php
+    restart: always
+    volumes:
+        - "../src:/var/www/php-script"
+    networks:
+        - docker-vpc
+
+networks:
+  docker-vpc:
+    driver: bridge
