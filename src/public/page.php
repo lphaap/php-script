@@ -9,3 +9,8 @@ require_once(ROOT_PATH . "/processor/PHPScript.php");
 <?=
     PHPScript::require(ROOT_PATH . "/public/page.pscript");
 ?>
+
+
+<script>
+    setTimeout(() => window.location.reload(), 2000)
+</script>
