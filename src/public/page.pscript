@@ -1,6 +1,14 @@
 <?pscript
 
+$hello = "Hello World";
+$hello2 = "Hello Worlder";
+
 client {
-    let hello = "Hello World!";
+    let hello = $hello;
     console.log(hello);
+}
+
+client {
+    let hello2 = $hello2;
+    console.log(hello2);
 }
