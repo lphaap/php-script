@@ -2,13 +2,19 @@
 
 $hello = "Hello World";
 $hello2 = "Hello Worlder";
+$hello3 = 123;
+$hello4 = true;
+
+$array = [ $hello2, $hello3, $hello4, null ];
 
 client {
     let hello = $hello;
-    console.log(hello);
+    console.log(hello, $hello3, $hello4);
+    console.log($array);
 }
 
 client {
     let hello2 = $hello2;
-    console.log(hello2);
+    console.log(hello2, $hello3, $hello4);
+    console.log($array);
 }

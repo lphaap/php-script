@@ -48,9 +48,9 @@ class PHPScript {
         );
 
         preg_match_all(
-            '/(\$[\w]+)\s*=\s*(.*?);/', 
-            $parsed_script, 
-            $php_variable_clauses, 
+            '/(\$[\w]+)\s*=\s*(.*?);/',
+            $parsed_script,
+            $php_variable_clauses,
             PREG_SET_ORDER
         );
 
@@ -77,14 +77,16 @@ class PHPScript {
                 if (!empty($trimmed_row)) {
 
                     if (str_contains($trimmed_row, '$')) {
-                        preg_match('/\$\w+/', $trimmed_row, $matched_vars);
-                        $variable_clause = $matched_vars[0];
-                        
-                        $var_name = str_replace('$', '', $variable_clause);
-                        list($hygienic_var_name, $var_clause) = $this->parse_variable($var_name);
-                        
-                        array_unshift($parsed_rows, $var_clause);
-                        $parsed_rows[] = str_replace($variable_clause, $hygienic_var_name, $trimmed_row);    
+                        $parsed_row = $trimmed_row;
+                        preg_match_all('/\$\w+/', $trimmed_row, $matched_variables);
+                        foreach ($matched_variables[0] as $variable_clause) {
+                            $var_name = str_replace('$', '', $variable_clause);
+                            list($hygienic_var_name, $var_clause) = $this->parse_variable($var_name);
+
+                            array_unshift($parsed_rows, $var_clause);
+                            $parsed_row = str_replace($variable_clause, $hygienic_var_name, $parsed_row);
+                        }
+                        $parsed_rows[] = $parsed_row;
                         continue;
                     }
 
@@ -113,17 +115,10 @@ class PHPScript {
             throw new Exception("Variable '{$name}' not found in context");
         }
 
-        if (!is_numeric($value) && !is_string($value)) {
-            throw new Exception("Variable type not implemented yet: " . gettype($value));
-        }
-
-        if (is_string($value)) {
-            $value = "'{$value}'";
-        }
-
+        $converted_value = $this->convert_variable($value);
         $hygienic_name = $this->get_hygienic_name($name);
 
-        $clause = "const {$hygienic_name} = {$value};";
+        $clause = "const {$hygienic_name} = {$converted_value};";
 
         return [$hygienic_name, $clause];
     }
@@ -131,20 +126,50 @@ class PHPScript {
     function get_hygienic_name($name, $subfix_length = 8) {
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $numbers = '0123456789';
-        
+
         // Start with a random letter or underscore
         $hygienic_name = $name . '_' . $chars[rand(0, strlen($chars) - 1)];
-        
+
         // Generate the rest of the variable name
         for ($index = 1; $index < $subfix_length; $index++) {
             // Mix letters and numbers for the rest of the variable name
-            $char = (rand(0, 10) > 5) ? 
-                $chars[rand(0, strlen($chars) - 1)] : 
+            $char = (rand(0, 10) > 5) ?
+                $chars[rand(0, strlen($chars) - 1)] :
                 $numbers[rand(0, strlen($numbers) - 1)];
 
             $hygienic_name .= $char;
         }
-        
+
         return $hygienic_name;
+    }
+
+    function convert_variable($value) {
+        if ($value === null) {
+            return "null";
+        }
+
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        if (is_bool($value)) {
+            return $value ? "true" : "false";
+        }
+
+        if (is_string($value)) {
+            return "\"$value\"";
+        }
+
+        if (is_object($value) || is_callable($value)) {
+            throw new Error("Not implemented yet.");
+        }
+
+        if (is_array($value)) {
+            $parsed_values = [];
+            foreach ($value as $sub_value) {
+                $parsed_values[] = $this->convert_variable($sub_value);
+            }
+            return "[" . implode(", ", $parsed_values) . "]";
+        }
     }
 }
