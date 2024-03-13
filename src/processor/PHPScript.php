@@ -4,8 +4,16 @@ require_once('Context.php');
 
 class PHPScript {
     public static function require($path, $context = []) {
+        // TODO: Do a cache check
         $processor = new self($context);
-        $processor->process($path);
+        $php = $processor->process($path);
+
+        $file_name = hash('sha256', $path);
+        $file_path = __DIR__ . "/__pscript_cache/" . $file_name . '.php';
+
+        file_put_contents($file_path, $php);
+
+        return $file_path;
     }
 
     private $context;
@@ -36,6 +44,8 @@ class PHPScript {
                 htmlspecialchars($pscript) .
             '</pre>'
         ;
+
+        return $pscript;
     }
 
     private function parse($pscript) {
@@ -96,7 +106,7 @@ class PHPScript {
 
             $parsed_script = preg_replace(
                 '/client \{(?s)(.*?)(?s)\}/',
-                "<script id=\"pscript-block-{$block_index}\">\n"
+                "<script \"id\"=\"pscript-block-{$block_index}\">\n"
                     . implode("\n", $parsed_rows) .
                 "\n</script>",
                 $parsed_script,

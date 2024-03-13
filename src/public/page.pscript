@@ -7,6 +7,8 @@ $hello4 = true;
 
 $array = [ $hello2, $hello3, $hello4, null ];
 
+?>
+
 client {
     let hello = $hello;
     console.log(hello, $hello3, $hello4);
