@@ -3,17 +3,53 @@
 require_once('Context.php');
 
 class PHPScript {
-    public static function require($path, $context = []) {
-        // TODO: Do a cache check
+
+    public const PSCRIPT_CACHE = __DIR__ . "/__pscript_cache/";
+
+    private const CACHE_ENABLED = true;
+
+    private static function debug($source_file_path, $cache_file_path) {
+        $source = file_get_contents($source_file_path);
+        $compiled = file_get_contents($cache_file_path);
+
+        echo
+            '</br></br>
+            <b>SOURCE:</b>
+            <pre style="">' .
+                htmlspecialchars($source) .
+            '</pre>'
+        ;
+
+        echo
+            '</br></br>
+            <b>COMPILED:</b>
+            <pre style="">' .
+                htmlspecialchars($compiled) .
+            '</pre>'
+        ;
+    }
+
+    public static function require($source_file_path, $context = []) {
+        $cache_file_hash = hash('sha256', $source_file_path);
+        $cache_file_path = self::PSCRIPT_CACHE . $cache_file_hash . '.php';
+
+        if (self::CACHE_ENABLED && file_exists($cache_file_path)) {
+            $cache_last_modified = filemtime($cache_file_path);
+            $source_last_modified = filemtime($source_file_path);
+            if ($cache_last_modified > $source_last_modified) {
+                self::debug($source_file_path, $cache_file_path);
+                return $cache_file_path;
+            }
+        }
+
+        // Run pre-processor
         $processor = new self($context);
-        $php = $processor->process($path);
+        $php = $processor->process($source_file_path);
 
-        $file_name = hash('sha256', $path);
-        $file_path = __DIR__ . "/__pscript_cache/" . $file_name . '.php';
+        file_put_contents($cache_file_path, $php);
 
-        file_put_contents($file_path, $php);
-
-        return $file_path;
+        self::debug($source_file_path, $cache_file_path);
+        return $cache_file_path;
     }
 
     private $context;
@@ -28,23 +64,6 @@ class PHPScript {
     private function process ($path) {
         $original_pscript = file_get_contents($path);
         $pscript = self::parse($original_pscript);
-
-        echo
-            '</br></br>
-            <b>SOURCE:</b>
-            <pre style="">' .
-                htmlspecialchars($original_pscript) .
-            '</pre>'
-        ;
-
-        echo
-            '</br></br>
-            <b>COMPILED:</b>
-            <pre style="">' .
-                htmlspecialchars($pscript) .
-            '</pre>'
-        ;
-
         return $pscript;
     }
 
