@@ -3,3 +3,5 @@
 - Variable passing PHP->JS
 - Client Keyword
 - Hygienic variable renaming
+- Context passing
+- PScript require
