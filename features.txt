@@ -5,3 +5,4 @@
 - Hygienic variable renaming
 - Context passing
 - PScript require
+- Inline JIT expression evaluation

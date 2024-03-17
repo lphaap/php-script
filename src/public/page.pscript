@@ -1,5 +1,9 @@
 <?pscript
 
+$debug = false;
+$print1 = true;
+$print2 = true;
+
 $hello = "Hello World";
 $hello2 = "Hello Worlder";
 $hello3 = 123;
@@ -10,13 +14,17 @@ $array = [ $hello2, $hello3, $hello4, null ];
 ?>
 
 client {
+    let wow = $ [ $hello . $hello3; ]
     let hello = $hello;
-    console.log(hello, $hello3, $hello4);
-    console.log($array);
+    if ($[$debug && $print1]) {
+        console.log(hello, $hello3, $hello4);
+    }
 }
 
 client {
     let hello2 = $hello2;
-    console.log(hello2, $hello3, $hello4);
-    console.log($array);
+    if ($[$debug && $print2]) {
+        console.log(hello2, $hello3, $hello4);
+        console.log($array);
+    }
 }

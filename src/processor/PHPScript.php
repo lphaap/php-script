@@ -6,14 +6,14 @@ class PHPScript {
 
     public const PSCRIPT_CACHE = __DIR__ . "/__pscript_cache/";
 
-    private const CACHE_ENABLED = true;
+    private const CACHE_ENABLED = false;
 
     private static function debug($source_file_path, $cache_file_path) {
         $source = file_get_contents($source_file_path);
         $compiled = file_get_contents($cache_file_path);
 
         echo
-            '</br></br>
+            '- - - - - - - - - - << DEBUG >> - - - - - - - - - - </br></br>
             <b>SOURCE:</b>
             <pre style="">' .
                 htmlspecialchars($source) .
@@ -21,11 +21,13 @@ class PHPScript {
         ;
 
         echo
-            '</br></br>
+            '</br>
             <b>COMPILED:</b>
             <pre style="">' .
                 htmlspecialchars($compiled) .
-            '</pre>'
+            '</pre>
+            </br>- - - - - - - - - - << DEBUG >> - - - - - - - - - - </br></br>'
+
         ;
     }
 
@@ -91,16 +93,40 @@ class PHPScript {
         }
 
         preg_match_all(
-            '/client \{(?s)(.*?)(?s)\}/',
+            '/client\s*(?= (\{ (?: [^{}]+ | (?1) )*+ \}) )/x',
             $parsed_script,
             $client_blocks
         );
 
         $block_index = 0;
         foreach($client_blocks[1] ?? [] as $block) {
+            $parsed_block =  preg_replace('/^\{\s*(.*)\s*\}$/s', '$1', $block);
+
+            $inline_expression_pattern = '/(\$\s*\[\s*)([^]]+)(\s*\])/';
+            preg_match_all($inline_expression_pattern, $parsed_block, $inline_expressions);
+
+            foreach ($inline_expressions[2] ?? [] as $expression) {
+                $parsed_expression = trim($expression);
+
+                $tmp_variable_name = $this->get_hygienic_name('tmp');
+                if (!str_ends_with($parsed_expression, ';')) {
+                    $parsed_expression = $parsed_expression . ';';
+                }
+
+                $this->context->set($tmp_variable_name, $parsed_expression);
+                eval("$" . $tmp_variable_name . " = " . $parsed_expression);
+
+                $js_value = $this->convert_variable($$tmp_variable_name);
+                $parsed_block = preg_replace(
+                    $inline_expression_pattern,
+                    $js_value,
+                    $parsed_block,
+                    1
+                );
+            }
 
             $parsed_rows = [];
-            $rows = preg_split("/\r\n|\n|\r/", $block);
+            $rows = preg_split("/\r\n|\n|\r/", $parsed_block);
             foreach ($rows as $row) {
                 $trimmed_row = trim($row);
                 if (!empty($trimmed_row)) {
@@ -124,7 +150,7 @@ class PHPScript {
             }
 
             $parsed_script = preg_replace(
-                '/client \{(?s)(.*?)(?s)\}/',
+                '/client\s*(?= (\{ (?: [^{}]+ | (?1) )*+ \}) )/x',
                 "<script \"id\"=\"pscript-block-{$block_index}\">\n"
                     . implode("\n", $parsed_rows) .
                 "\n</script>",
@@ -132,8 +158,14 @@ class PHPScript {
                 1
             );
 
+            // Remove the parsed client block
+            $parsed_script = str_replace($block, "", $parsed_script);;
+
             $block_index++;
         }
+
+        // Remove existing client keywords
+        $parsed_script = str_replace('client', "", $parsed_script);
 
         return $parsed_script;
     }
