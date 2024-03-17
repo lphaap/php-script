@@ -1,12 +1,16 @@
 <?php
 
+namespace PScript;
+
 require_once('Context.php');
 
-class PHPScript {
+class PScript {
 
     public const PSCRIPT_CACHE = __DIR__ . "/__pscript_cache/";
 
     private const CACHE_ENABLED = false;
+
+    private const EVAL_NAMESPACE = "namespace PScript; ";
 
     private static function debug($source_file_path, $cache_file_path) {
         $source = file_get_contents($source_file_path);
@@ -70,6 +74,8 @@ class PHPScript {
     }
 
     private function parse($pscript) {
+        //Wrap everything in a namespace to avoid unhygienic definitons
+
         $parsed_rows = [];
 
         $parsed_script = str_replace(
@@ -87,9 +93,18 @@ class PHPScript {
 
         $js_variable_clauses = [];
         foreach ($php_variable_clauses as $parsed_clause) {
-            eval($parsed_clause[0]); // Evaluate variable to local scope
+            eval(self::EVAL_NAMESPACE . $parsed_clause[0]); // Evaluate variable to local scope
             $variable_name = str_replace('$', '', $parsed_clause[1]);
             $this->context->set($variable_name, $$variable_name);
+        }
+
+        preg_match_all(
+            '/<\?php(.*?)\?>/s',
+            $parsed_script,
+            $php_expressions
+        );
+        if (!empty($php_expressions[1][0])) {
+            eval(self::EVAL_NAMESPACE . $php_expressions[1][0]);
         }
 
         preg_match_all(
@@ -114,7 +129,7 @@ class PHPScript {
                 }
 
                 $this->context->set($tmp_variable_name, $parsed_expression);
-                eval("$" . $tmp_variable_name . " = " . $parsed_expression);
+                eval(self::EVAL_NAMESPACE . "$" . $tmp_variable_name . " = " . $parsed_expression);
 
                 $js_value = $this->convert_variable($$tmp_variable_name);
                 $parsed_block = preg_replace(

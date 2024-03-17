@@ -6,3 +6,4 @@
 - Context passing
 - PScript require
 - Inline JIT expression evaluation
+- Hygienic namespace

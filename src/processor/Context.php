@@ -1,5 +1,7 @@
 <?php
 
+namespace PScript;
+
 class Context {
     private $variables = [];
 

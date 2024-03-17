@@ -2,12 +2,14 @@
 
 require_once(ROOT_PATH . "/processor/PHPScript.php");
 
+use \PScript\PScript;
+
 ?>
 
 <h1>PHP SCRIPT DEMO</h1>
 
 <?=
-    require_once PHPScript::require(ROOT_PATH . "/public/page.pscript");
+    require_once PScript::require(ROOT_PATH . "/public/page.pscript");
 ?>
 
 
