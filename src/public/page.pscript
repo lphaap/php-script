@@ -18,17 +18,10 @@ function asd() {
 ?>
 
 client {
-    let wow = $ [ $hello . $hello3; ]
-    let hello = $hello;
-    if ($[$debug && $print1]) {
-        console.log($[asd();]);
-    }
+    console.log($hello);
 }
 
-client {
-    let hello2 = $hello2;
-    if ($[$debug && $print2]) {
-        console.log(hello2, $hello3, $hello4);
-        console.log($array);
-    }
+client function log(var) {
+    const date = $[ (new \DateTime('NOW'))->format('Y-m-d'); ];
+    console.log(date, var);
 }
