@@ -108,13 +108,15 @@ class PScript {
         }
 
         preg_match_all(
-            '/client\s*(?= (\{ (?: [^{}]+ | (?1) )*+ \}) )/x',
+            '/client\s.*(?=(\{(?:[^{}]+|(?1))*+\}))/x',
             $parsed_script,
             $client_blocks
         );
 
         $block_index = 0;
         foreach($client_blocks[1] ?? [] as $block) {
+            $keyword_block = $client_blocks[0][$block_index];
+
             $parsed_block =  preg_replace('/^\{\s*(.*)\s*\}$/s', '$1', $block);
 
             $inline_expression_pattern = '/(\$\s*\[\s*)([^]]+)(\s*\])/';
@@ -164,8 +166,14 @@ class PScript {
                 }
             }
 
+            if (preg_match('/^client\sfunction/', $keyword_block)) {
+                $parsed_keyword_block = preg_replace('/^client\s+/', '', $keyword_block);
+                array_unshift($parsed_rows, $parsed_keyword_block . " {");
+                $parsed_rows[] = "}";
+            }
+
             $parsed_script = preg_replace(
-                '/client\s*(?= (\{ (?: [^{}]+ | (?1) )*+ \}) )/x',
+                '/client\s.*(?=(\{(?:[^{}]+|(?1))*+\}))/x',
                 "<script \"id\"=\"pscript-block-{$block_index}\">\n"
                     . implode("\n", $parsed_rows) .
                 "\n</script>",
@@ -174,7 +182,7 @@ class PScript {
             );
 
             // Remove the parsed client block
-            $parsed_script = str_replace($block, "", $parsed_script);;
+            $parsed_script = str_replace($block, "", $parsed_script);
 
             $block_index++;
         }
@@ -188,7 +196,7 @@ class PScript {
     private function parse_variable($name) {
         $value = $this->context->get($name);
         if ($value === null) {
-            throw new Exception("Variable '{$name}' not found in context");
+            throw new \Exception("Variable '{$name}' not found in context");
         }
 
         $converted_value = $this->convert_variable($value);
@@ -237,7 +245,7 @@ class PScript {
         }
 
         if (is_object($value) || is_callable($value)) {
-            throw new Error("Not implemented yet.");
+            throw new \Error("Not implemented yet.");
         }
 
         if (is_array($value)) {
