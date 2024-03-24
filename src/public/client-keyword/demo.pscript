@@ -1,0 +1,8 @@
+
+client {
+    console.log("Hello world1!");
+}
+
+client {
+    console.log("Hello world2!");
+}
