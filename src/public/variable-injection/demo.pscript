@@ -1,0 +1,16 @@
+<?pscript
+
+$hello_world1 = "Hello world 1!";
+$hello_world2 = "Hello world 2!";
+
+?>
+
+
+client {
+    console.log($hello_world1);
+}
+
+client {
+    const js_hello_2 = $hello_world2;
+    console.log(js_hello_2);
+}
