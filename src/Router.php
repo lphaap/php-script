@@ -37,6 +37,9 @@ class Router {
             return false;
         }
         catch (Exception $e) {
+            if (DEBUG) {
+                throw $e;
+            }
             return false;
         }
     }

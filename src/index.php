@@ -1,6 +1,7 @@
 <?php
 
 define('ROOT_PATH', __DIR__);
+define('DEBUG', true);
 
 require_once(ROOT_PATH . "/Router.php");
 
@@ -17,3 +18,11 @@ require_once(ROOT_PATH . "/Router.php");
             <h1>Not found :(</h1>
     <?php } ?>
 </div>
+
+<?php if (DEBUG) { ?>
+    <script>
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    </script>
+<?php } ?>
