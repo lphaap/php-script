@@ -1,27 +1,16 @@
-<?pscript
 
-$debug = false;
-$print1 = true;
-$print2 = true;
-
-$hello = "Hello World";
-$hello2 = "Hello World2";
-$hello3 = 123;
-$hello4 = true;
-
-$array = [ $hello2, $hello3, $hello4, null ];
-
-function asd() {
-    return "ASD";
+client  {
+    function hello(name) {
+        console.log("Hello " +  name);
+    } 
+    const lassi = "lassi";
 }
 
+<?pscript
+    $js_func = client hello;
+    $js_var = client lassi;
 ?>
 
 client {
-    console.log($hello);
-}
-
-client function log(var) {
-    const date = $[ (new \DateTime('NOW'))->format('Y-m-d'); ];
-    console.log(date, var);
+    $js_func($js_var);
 }
