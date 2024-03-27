@@ -34,6 +34,12 @@ class Router {
                 return true;
             }
 
+            // Cross-language references
+            if (str_contains($path, 'cross-language-references')) {
+                require_once(ROOT_PATH . "/public/cross-language-references/index.php");
+                return true;
+            }
+
             return false;
         }
         catch (Exception $e) {

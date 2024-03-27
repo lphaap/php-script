@@ -3,6 +3,7 @@
 namespace PScript;
 
 require_once('Context.php');
+require_once('PScriptVar.php');
 
 class PScript {
 
@@ -16,8 +17,9 @@ class PScript {
         $source = file_get_contents($source_file_path);
         $compiled = file_get_contents($cache_file_path);
 
-        echo
-            '- - - - - - - - - - << DEBUG >> - - - - - - - - - - </br></br>
+        if (DEBUG) {
+            echo
+            '</br></br>- - - - - - - - - - << DEBUG >> - - - - - - - - - - </br></br>
             <b>SOURCE:</b>
             <pre style="">' .
                 htmlspecialchars($source) .
@@ -33,6 +35,7 @@ class PScript {
             </br>- - - - - - - - - - << DEBUG >> - - - - - - - - - - </br></br>'
 
         ;
+        }
     }
 
     public static function require($source_file_path, $context = []) {
@@ -75,15 +78,16 @@ class PScript {
 
     private function parse($pscript) {
         //Wrap everything in a namespace to avoid unhygienic definitons
-
         $parsed_rows = [];
 
+        // Replace PScript tag
         $parsed_script = str_replace(
             '<?pscript',
             '<?php',
             $pscript
         );
 
+        // Evaluate PHP expressions into the current context
         preg_match_all(
             '/(\$[\w]+)\s*=\s*(.*?);/',
             $parsed_script,
@@ -92,12 +96,37 @@ class PScript {
         );
 
         $js_variable_clauses = [];
-        foreach ($php_variable_clauses as $parsed_clause) {
-            eval(self::EVAL_NAMESPACE . $parsed_clause[0]); // Evaluate variable to local scope
-            $variable_name = str_replace('$', '', $parsed_clause[1]);
+        foreach ($php_variable_clauses as $clause_row) {
+            $full_clause = $clause_row[0];
+            $variable_name = str_replace('$', '', $clause_row[1]);
+
+            // Handle PScript variable references
+            if (
+                str_contains($full_clause, "client") &&
+                str_contains($full_clause, "$")
+            ) {
+                preg_match_all(
+                    '/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*client\s+([a-zA-Z_][a-zA-Z0-9_]*);/',
+                    $full_clause,
+                    $matched_clause
+                );
+
+                $php_var_name = $matched_clause[1][0];
+                $js_var_name = $matched_clause[2][0];
+
+                $$php_var_name = PScriptVar::reference($js_var_name);
+                $this->context->set($php_var_name, $$php_var_name);
+
+                $parsed_script = str_replace($full_clause, "", $parsed_script);
+                continue;
+            }
+
+            // Evaluate variable to local scope
+            eval(self::EVAL_NAMESPACE . $full_clause);
             $this->context->set($variable_name, $$variable_name);
         }
 
+        // Run PHP blocks to evaluate expressions into current scope
         preg_match_all(
             '/<\?php(.*?)\?>/s',
             $parsed_script,
@@ -107,6 +136,7 @@ class PScript {
             eval(self::EVAL_NAMESPACE . $php_expressions[1][0]);
         }
 
+        // Start client block parsing
         preg_match_all(
             '/client\s.*(?=(\{(?:[^{}]+|(?1))*+\}))/x',
             $parsed_script,
@@ -115,10 +145,11 @@ class PScript {
 
         $block_index = 0;
         foreach($client_blocks[1] ?? [] as $block) {
+            // Save block and keyword for later use
             $keyword_block = $client_blocks[0][$block_index];
-
             $parsed_block =  preg_replace('/^\{\s*(.*)\s*\}$/s', '$1', $block);
 
+            // Parse all inline PHP expression injections
             $inline_expression_pattern = '/(\$\s*\[\s*)([^]]+)(\s*\])/';
             preg_match_all($inline_expression_pattern, $parsed_block, $inline_expressions);
 
@@ -142,12 +173,14 @@ class PScript {
                 );
             }
 
+            // Parse each client block row
             $parsed_rows = [];
             $rows = preg_split("/\r\n|\n|\r/", $parsed_block);
             foreach ($rows as $row) {
                 $trimmed_row = trim($row);
                 if (!empty($trimmed_row)) {
 
+                    // Evaluate PHP variables into JS format
                     if (str_contains($trimmed_row, '$')) {
                         $parsed_row = $trimmed_row;
                         preg_match_all('/\$\w+/', $trimmed_row, $matched_variables);
@@ -166,12 +199,14 @@ class PScript {
                 }
             }
 
+            // Parse client function borders
             if (preg_match('/^client\sfunction/', $keyword_block)) {
                 $parsed_keyword_block = preg_replace('/^client\s+/', '', $keyword_block);
                 array_unshift($parsed_rows, $parsed_keyword_block . " {");
                 $parsed_rows[] = "}";
             }
 
+            // Inject Parsed client block with script tags
             $parsed_script = preg_replace(
                 '/client\s.*(?=(\{(?:[^{}]+|(?1))*+\}))/x',
                 "<script \"id\"=\"pscript-block-{$block_index}\">\n"
@@ -242,6 +277,10 @@ class PScript {
 
         if (is_string($value)) {
             return "\"$value\"";
+        }
+
+        if (is_a($value, 'PScript\PScriptVar')) {
+            return $value->get();
         }
 
         if (is_object($value) || is_callable($value)) {
