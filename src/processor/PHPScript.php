@@ -95,27 +95,29 @@ class PScript {
             PREG_SET_ORDER
         );
 
-        $js_variable_clauses = [];
         foreach ($php_variable_clauses as $clause_row) {
             $full_clause = $clause_row[0];
             $variable_name = str_replace('$', '', $clause_row[1]);
 
             // Handle PScript variable references
+            $pscript_references = [];
             if (
                 str_contains($full_clause, "client") &&
                 str_contains($full_clause, "$")
             ) {
                 preg_match_all(
-                    '/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*client\s+([a-zA-Z_][a-zA-Z0-9_]*);/',
+                    "/$([a-zA-Z_][a-zA-Z0-9_]*)(\['[a-zA-Z0-9_]+'\]|->\w+)?\s*=\s*client\s+([a-zA-Z_][a-zA-Z0-9_]*);/",
                     $full_clause,
                     $matched_clause
                 );
 
-                $php_var_name = $matched_clause[1][0];
-                $js_var_name = $matched_clause[2][0];
-
-                $$php_var_name = PScriptVar::reference($js_var_name);
-                $this->context->set($php_var_name, $$php_var_name);
+                echo json_encode($matched_clause, JSON_PRETTY_PRINT);
+                $pscript_references[] = [
+                    'full_clause' => $full_clause,
+                    'php_var_name' => $matched_clause[1][0] ?? null,
+                    'obj_expression' => $matched_clause[2][0] ?? null,
+                    'js_var_name' => $matched_clause[3][0] ?? null
+                ];
 
                 $parsed_script = str_replace($full_clause, "", $parsed_script);
                 continue;
@@ -134,6 +136,15 @@ class PScript {
         );
         if (!empty($php_expressions[1][0])) {
             eval(self::EVAL_NAMESPACE . $php_expressions[1][0]);
+        }
+
+        foreach ($pscript_references as $reference) {
+            $php_var_name = $reference['php_var_name'];
+            $js_var_name = $reference['js_var_name'];
+            $obj_expression = $reference['obj_expression'];
+
+            $$php_var_name = PScriptVar::reference($js_var_name);
+            $this->context->set($php_var_name, $$php_var_name);
         }
 
         // Start client block parsing

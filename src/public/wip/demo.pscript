@@ -1,19 +1,25 @@
 <?pscript
-    $double_func_reference = client double;
-    $random_amount_reference = client random_amount_js;
-    $random_amount_php = rand(1, 10);
+    $namespace1 = [];
+    $namespace2 = [];
+
+    $namespace1['hello_world'] = client hello1;
+    $namespace2['hello_world'] = client hello2;
 ?>
 
 client  {
-    const random_amount_js = $random_amount_php; 
-    function double(amount) {
-        return amount * 2;
+    function hello1() {
+        console.log("Hello world 1!");
+    }
+
+    function hello2() {
+        console.log("Hello world 2!");
     }
 }
 
 client {
-    const value = $double_func_reference(
-        $random_amount_reference
-    );
-    console.log(value);
+    $namespace1['hello_world']();
+}
+
+client {
+    $namespace2['hello_world']();
 }
