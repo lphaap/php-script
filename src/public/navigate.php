@@ -21,6 +21,11 @@
             Cross language references
         </a>
     </li>
+    <li>
+        <a href="/namespaces/">
+            Namespaces
+        </a>
+    </li>
 </li>
 
 

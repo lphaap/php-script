@@ -2,6 +2,8 @@
 
 namespace PScript;
 
+use Attribute;
+
 require_once('Context.php');
 require_once('PScriptVar.php');
 
@@ -89,51 +91,53 @@ class PScript {
 
         // Evaluate PHP expressions into the current context
         preg_match_all(
-            '/(\$[\w]+)\s*=\s*(.*?);/',
+            '/(\$[\w]+)(?:\[\'(\w+)\'\]|\->(\w+))?\s*=\s*(.*?);/',
             $parsed_script,
-            $php_variable_clauses,
-            PREG_SET_ORDER
+            $php_variable_clauses
         );
 
-        $js_variable_clauses = [];
-        foreach ($php_variable_clauses as $clause_row) {
-            $full_clause = $clause_row[0];
-            $variable_name = str_replace('$', '', $clause_row[1]);
+        $clause_index = 0;
+        foreach ($php_variable_clauses[0] as $full_clause) {
+            $variable_reference = $php_variable_clauses[1][$clause_index];
+            $array_attribute = $php_variable_clauses[2][$clause_index] ?? null;
+            $object_attribute = $php_variable_clauses[3][$clause_index] ?? null;
+            $value = $php_variable_clauses[4][$clause_index];
 
-            // Handle PScript variable references
-            if (
-                str_contains($full_clause, "client") &&
-                str_contains($full_clause, "$")
-            ) {
-                preg_match_all(
-                    '/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*client\s+([a-zA-Z_][a-zA-Z0-9_]*);/',
-                    $full_clause,
-                    $matched_clause
-                );
+            $variable_name = str_replace('$', '', $variable_reference);
 
-                $php_var_name = $matched_clause[1][0];
-                $js_var_name = $matched_clause[2][0];
+            $object_reference = '';
+            if ($array_attribute) {
+                $object_reference = "['{$array_attribute}']";
+            }
+            else if ($object_attribute) {
+                $object_reference = "->{$array_attribute}";
+            }
 
-                $$php_var_name = PScriptVar::reference($js_var_name);
-                $this->context->set($php_var_name, $$php_var_name);
-
+            if (str_contains($full_clause, ' client ')) {
+                $client_reference = trim(str_replace('client', '', $value));
                 $parsed_script = str_replace($full_clause, "", $parsed_script);
-                continue;
+
+                $full_clause = $variable_reference . $object_reference .
+                ' = PScriptVar::reference("' . $client_reference . '");';
             }
 
             // Evaluate variable to local scope
             eval(self::EVAL_NAMESPACE . $full_clause);
-            $this->context->set($variable_name, $$variable_name);
-        }
+            $defined_variable = $$variable_name;
 
-        // Run PHP blocks to evaluate expressions into current scope
-        preg_match_all(
-            '/<\?php(.*?)\?>/s',
-            $parsed_script,
-            $php_expressions
-        );
-        if (!empty($php_expressions[1][0])) {
-            eval(self::EVAL_NAMESPACE . $php_expressions[1][0]);
+            if ($array_attribute) {
+                $defined_variable = $defined_variable[$array_attribute];
+                $this->context->set_attribute($variable_name, $array_attribute, $defined_variable);
+            }
+            else if ($object_attribute) {
+                $defined_variable = $defined_variable->$array_attribute;
+                $this->context->set_attribute($variable_name, $object_attribute, $defined_variable);
+            }
+            else {
+                $this->context->set($variable_name, $defined_variable);
+            }
+
+            $clause_index++;
         }
 
         // Start client block parsing
@@ -177,25 +181,39 @@ class PScript {
             $parsed_rows = [];
             $rows = preg_split("/\r\n|\n|\r/", $parsed_block);
             foreach ($rows as $row) {
-                $trimmed_row = trim($row);
-                if (!empty($trimmed_row)) {
+                $parsed_row = trim($row);
+                if (!empty($parsed_row)) {
 
                     // Evaluate PHP variables into JS format
-                    if (str_contains($trimmed_row, '$')) {
-                        $parsed_row = $trimmed_row;
-                        preg_match_all('/\$\w+/', $trimmed_row, $matched_variables);
-                        foreach ($matched_variables[0] as $variable_clause) {
-                            $var_name = str_replace('$', '', $variable_clause);
-                            list($hygienic_var_name, $var_clause) = $this->parse_variable($var_name);
+                    if (str_contains($parsed_row, '$')) {
+                        preg_match_all(
+                            '/\$(\w+)(?:->(\w+)|\[[\'"](\w+)[\'"]\])?/',
+                            $parsed_row,
+                            $matched_variables,
+                            PREG_SET_ORDER
+                        );
+                        foreach ($matched_variables as $match) {
+                            $variable_reference = $match[0];
+                            $variable_name = $match[1];
 
-                            array_unshift($parsed_rows, $var_clause);
-                            $parsed_row = str_replace($variable_clause, $hygienic_var_name, $parsed_row);
+                            $array_key = !empty($match[2]) ? $match[2] : null;
+                            $obj_key = !empty($match[3]) ? $match[3] : null;
+                            $attribute = $array_key ?? $obj_key;
+
+                            $parsed_js_variable = $this->parse_variable($variable_name, $attribute);
+                            $js_reference = $parsed_js_variable[0];
+                            $js_expression = $parsed_js_variable[1];
+
+                            array_unshift($parsed_rows, $js_expression);
+                            $parsed_row = str_replace(
+                                $variable_reference,
+                                $js_reference,
+                                $parsed_row
+                            );
                         }
-                        $parsed_rows[] = $parsed_row;
-                        continue;
                     }
 
-                    $parsed_rows[] = $trimmed_row;
+                    $parsed_rows[] = $parsed_row;
                 }
             }
 
@@ -228,14 +246,20 @@ class PScript {
         return $parsed_script;
     }
 
-    private function parse_variable($name) {
-        $value = $this->context->get($name);
-        if ($value === null) {
-            throw new \Exception("Variable '{$name}' not found in context");
+    private function parse_variable($variable_name, $attribute = null) {
+        if (!empty($attribute)) {
+            $php_value = $this->context->get_attribute($variable_name, $attribute);
+        }
+        else {
+            $php_value = $this->context->get($variable_name);
         }
 
-        $converted_value = $this->convert_variable($value);
-        $hygienic_name = $this->get_hygienic_name($name);
+        if ($php_value === null) {
+            throw new \Exception("Variable '{$variable_name}' not found in context");
+        }
+
+        $converted_value = $this->convert_variable($php_value);
+        $hygienic_name = $this->get_hygienic_name($variable_name . ($attribute ? "_$attribute" : ""));
 
         $clause = "const {$hygienic_name} = {$converted_value};";
 

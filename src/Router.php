@@ -40,6 +40,12 @@ class Router {
                 return true;
             }
 
+            // Cross-language references
+            if (str_contains($path, 'namespaces')) {
+                require_once(ROOT_PATH . "/public/namespaces/index.php");
+                return true;
+            }
+
             return false;
         }
         catch (Exception $e) {
