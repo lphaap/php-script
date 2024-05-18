@@ -1,25 +1,23 @@
 <?pscript
 
-$hello_world1 = "Hello world 1!";
-$hello_world2 = "Hello world 2!";
+$hello = "Hello ";
+$world = "world!";
 
-$wow = " Wow!";
-
-$print1 = true;
-$print2 = false;
+$print1 = false;
+$print2 = true;
 
 ?>
 
 
 client {
-    const js_print = $[$hello_world1 . $wow];
-    if ($print1) {
-        console.log($hello_world1);
-    }
-}
+    const js_hello_world = $[$hello . $world];
+    const js_hello_world2 = js_hello_world + " - 2";
 
-client {
     if ($[$print1 && $print2]) {
-        console.log($hello_world2);
+        console.log(js_hello_world);
+    }
+
+    if ($[$print1 || $print2]) {
+        console.log(js_hello_world2);
     }
 }

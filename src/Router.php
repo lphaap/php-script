@@ -8,7 +8,6 @@ class Router {
 
     public static function get($path) {
         try {
-            // Navigate
             if (empty($path) || $path === "/") {
                 require_once(ROOT_PATH . "/public/navigate.php");
                 return true;

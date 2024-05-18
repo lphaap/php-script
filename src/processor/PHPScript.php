@@ -21,7 +21,7 @@ class PScript {
 
         if (DEBUG) {
             echo
-            '</br></br>- - - - - - - - - - << DEBUG >> - - - - - - - - - - </br></br>
+            '</br>
             <b>SOURCE:</b>
             <pre style="">' .
                 htmlspecialchars($source) .
@@ -34,8 +34,7 @@ class PScript {
             <pre style="">' .
                 htmlspecialchars($compiled) .
             '</pre>
-            </br>- - - - - - - - - - << DEBUG >> - - - - - - - - - - </br></br>'
-
+            </br>'
         ;
         }
     }

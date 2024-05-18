@@ -1,12 +1,9 @@
+<?php
+    // Demonstrative PHP block
+    $php_variable = "Hello world!";
+?>
 
 client {
-    console.log("Hello world1!");
-}
-
-client function hello_world(greeting) {
-    console.log("Hello world" + greeting);
-}
-
-client {
-    hello_world("2!!!");
+    // Demonstrative JavaScript block
+    console.log("Hello world JavaScript!");
 }

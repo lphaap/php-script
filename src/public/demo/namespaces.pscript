@@ -4,19 +4,21 @@
 
     $namespace1['hello_world'] = client hello1;
     $namespace2['hello_world'] = client hello2;
+
+    $namespace1['print'] = false;
     $namespace2['print'] = true;
-    $print1 = true;
+
 ?>
 
 client  {
     function hello1() {
-        if ($namespace2['print']) {
+        if ($namespace1['print']) {
             console.log("Hello world 1!");
         }
     }
 
     function hello2() {
-        if ($print1) {
+        if ($namespace2['print']) {
             console.log("Hello world 2!");
         }
     }
