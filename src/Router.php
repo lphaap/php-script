@@ -1,5 +1,9 @@
 <?php
 
+require_once(ROOT_PATH . "/processor/PHPScript.php");
+
+use \PScript\PScript;
+
 class Router {
 
     public static function get($path) {
@@ -10,40 +14,18 @@ class Router {
                 return true;
             }
 
-            // Expression injection
-            if (str_contains($path, 'wip')) {
-                require_once(ROOT_PATH . "/public/wip/index.php");
-                return true;
-            }
+            foreach (scandir("public/demo/") as $name) {
+                if (!str_contains($name, '.pscript')) {
+                    continue;
+                }
 
-            // Client keyword
-            if (str_contains($path, 'client-keyword')) {
-                require_once(ROOT_PATH . "/public/client-keyword/index.php");
-                return true;
-            }
+                $pscript_file_name = str_replace(".pscript", '', $name);
 
-            // Variable injection
-            if (str_contains($path, 'variable-injection')) {
-                require_once(ROOT_PATH . "/public/variable-injection/index.php");
-                return true;
-            }
-
-            // Expression injection
-            if (str_contains($path, 'expression-injection')) {
-                require_once(ROOT_PATH . "/public/expression-injection/index.php");
-                return true;
-            }
-
-            // Cross-language references
-            if (str_contains($path, 'cross-language-references')) {
-                require_once(ROOT_PATH . "/public/cross-language-references/index.php");
-                return true;
-            }
-
-            // Cross-language references
-            if (str_contains($path, 'namespaces')) {
-                require_once(ROOT_PATH . "/public/namespaces/index.php");
-                return true;
+                if (str_contains($path, $pscript_file_name)) {
+                    $pscript_file_path = __DIR__ . "/public/demo/" . $pscript_file_name . ".pscript";
+                    require_once(PScript::require($pscript_file_path));
+                    return true;
+                }
             }
 
             return false;
