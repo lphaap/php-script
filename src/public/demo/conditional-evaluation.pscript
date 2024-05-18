@@ -1,0 +1,22 @@
+<?pscript
+
+$hello_world1 = "Hello world 1!";
+$hello_world2 = "Hello world 2!";
+
+$show_hello1 = true;
+$show_hello2 = false;
+
+?>
+
+
+client {
+    if ($show_hello1) {
+        console.log($hello_world1);
+    }
+}
+
+client {
+    if ($show_hello2) {
+        console.log($hello_world2);
+    }
+}

@@ -2,18 +2,13 @@
 <h2>Select a demo:</h2>
 <ul>
     <li>
-        <a href="/client-keyword/">
-            Client keyword
+        <a href="/scoping/">
+            Scoping
         </a>
     </li>
     <li>
-        <a href="/variable-injection/">
-            Variable injection
-        </a>
-    </li>
-    <li>
-        <a href="/expression-injection/">
-            Expression injection
+        <a href="/hygienic-variable-transfer/">
+            Hygienic Variable Transfer
         </a>
     </li>
     <li>
@@ -22,8 +17,18 @@
         </a>
     </li>
     <li>
+        <a href="/conditional-evaluation/">
+            Conditional Evaluation
+        </a>
+    </li>
+    <li>
+        <a href="/expression-injection/">
+            Expression Injection
+        </a>
+    </li>
+    <li>
         <a href="/namespaces/">
-            Namespaces
+            Dynamic Namespaces
         </a>
     </li>
 </li>

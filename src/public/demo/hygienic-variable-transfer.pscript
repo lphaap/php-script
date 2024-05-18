@@ -1,0 +1,15 @@
+<?php
+    // PHP Variable definitions
+    $print_clause = true;
+    $print_text = "Hello world!";
+?>
+
+client {
+    // PScript variable transfer
+    const print_clause = $print_clause;
+    const print_text = $print_text;
+
+    if (print_clause) {
+        console.log(print_text);
+    }
+}
