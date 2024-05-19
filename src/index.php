@@ -9,7 +9,7 @@ require_once(ROOT_PATH . "/Router.php");
 
 <div style="padding: 5px;">
     <a href="/" style>
-        <h1>PHP SCRIPT DEMO</h1></br>
+        <h1>PScript Demo</h1></br>
     </a>
     <?php
         $found = Router::get($_SERVER['REQUEST_URI']);
