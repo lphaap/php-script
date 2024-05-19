@@ -6,6 +6,7 @@ use Attribute;
 
 require_once('Context.php');
 require_once('PScriptVar.php');
+require_once('PScriptBlock.php');
 
 class PScript {
 
@@ -139,6 +140,57 @@ class PScript {
             $clause_index++;
         }
 
+        // Evaluate remaining PHP blocks
+        $php_blocks = [];
+        preg_match_all(
+            '/(?<=<\?php)(.*?)(?=\?>)/s',
+            $parsed_script,
+            $php_blocks
+        );
+        foreach ($php_blocks[0] as $php_block) {
+            preg_match_all(
+                '/client\s.*(?=(\{(?:[^{}]+|(?1))*+\}))/x',
+                $php_block,
+                $php_client_blocks
+            );
+
+            $block_index = 0;
+            foreach ($php_client_blocks[0] as $client_statement) {
+                $client_block = $client_statement . $php_client_blocks[1][$block_index];
+
+                $parsed_client_block =
+                    "PScriptBlock::create('" .
+                    str_replace("\'","\"", $client_block) .
+                    "');";
+
+                $parsed_client_block = preg_replace(
+                    '/\s+/',
+                    "-",
+                    $parsed_client_block
+                );
+
+                $parsed_client_block = trim(
+                    str_replace("-", " ", $parsed_client_block)
+                );
+
+                $parsed_script = str_replace(
+                    $client_block,
+                    'PScriptBlock::create("'.$block_index.'");',
+                    $parsed_script
+                );
+
+                $php_block = str_replace(
+                    $client_block,
+                    $parsed_client_block,
+                    $php_block
+                );
+
+                $block_index++;
+            }
+
+            eval(self::EVAL_NAMESPACE . $php_block);
+        }
+
         // Start client block parsing
         preg_match_all(
             '/client\s.*(?=(\{(?:[^{}]+|(?1))*+\}))/x',
@@ -226,7 +278,7 @@ class PScript {
             // Inject Parsed client block with script tags
             $parsed_script = preg_replace(
                 '/client\s.*(?=(\{(?:[^{}]+|(?1))*+\}))/x',
-                "<script \"id\"=\"pscript-block-{$block_index}\">\n"
+                "<script id=\"pscript-block-{$block_index}\">\n"
                     . implode("\n", $parsed_rows) .
                 "\n</script>",
                 $parsed_script,
@@ -303,6 +355,10 @@ class PScript {
         }
 
         if (is_a($value, 'PScript\PScriptVar')) {
+            return $value->get();
+        }
+
+        if (is_a($value, 'PScript\PScriptBlock')) {
             return $value->get();
         }
 

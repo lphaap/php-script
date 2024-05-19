@@ -1,31 +1,17 @@
 <?pscript
-    $namespace1 = [];
-    $namespace2 = [];
+    $gg = 'GG';
 
-    $namespace1['hello_world'] = client hello1;
-    $namespace2['hello_world'] = client hello2;
-    $namespace2['print'] = true;
-    $print1 = true;
+    function test($bool) {
+        return client function hello1() {
+            console.log($gg);
+        }
+    }
+
 ?>
 
-client  {
-    function hello1() {
-        if ($namespace2['print']) {
-            console.log("Hello world 1!");
-        }
-    }
-
-    function hello2() {
-        if ($print1) {
-            console.log("Hello world 2!");
-        }
-    }
-}
-
 client {
-    $namespace1['hello_world']();
+    $[test(true)]
+
+    hello1();
 }
 
-client {
-    $namespace2['hello_world']();
-}
