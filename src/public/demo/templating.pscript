@@ -1,0 +1,39 @@
+<?pscript
+
+    function create_animal($animal_type) {
+        if ($animal_type == "cat") {
+            return client {
+                class Animal {
+                    who_am_i() {
+                        return "Cat";
+                    }
+
+                    say_hello() {
+                        console.log("Meow");
+                    }
+                }
+            }
+        }
+        else if ($animal_type == "dog") {
+            return client {
+                class Animal {
+                    who_am_i() {
+                        return "Dog";
+                    }
+
+                    say_hello() {
+                        console.log("Woof");
+                    }
+                }
+            }
+        }
+    }
+?>
+
+client {
+    $[create_animal("dog")]
+
+    const animal = new Animal();
+    console.log("Found a " + animal.who_am_i());
+    animal.say_hello();
+}

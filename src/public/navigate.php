@@ -1,37 +1,24 @@
 
 <h2>Select a demo:</h2>
+
 <ul>
+<?php 
+foreach (scandir("public/demo/") as $name) {
+        if (in_array($name, [".", ".."])) {
+            continue;
+        }
+        if (!DEBUG && $name == "wip") {
+            continue;
+        }
+        $parsed_name = str_replace(".pscript", "", $name);
+?>
     <li>
-        <a href="/scoping/">
-            Scoping
+        <a href="/<?= $parsed_name ?>/">
+            <?= ucfirst($parsed_name) ?>
         </a>
     </li>
-    <li>
-        <a href="/hygienic-variable-transfer/">
-            Hygienic Variable Transfer
-        </a>
-    </li>
-    <li>
-        <a href="/cross-language-references/">
-            Cross language references
-        </a>
-    </li>
-    <li>
-        <a href="/conditional-evaluation/">
-            Conditional Evaluation
-        </a>
-    </li>
-    <li>
-        <a href="/expression-injection/">
-            Expression Injection
-        </a>
-    </li>
-    <li>
-        <a href="/namespaces/">
-            Dynamic Namespaces
-        </a>
-    </li>
-</li>
+<?php } ?>
+</ul>
 
 
 <style>
