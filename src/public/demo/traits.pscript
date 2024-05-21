@@ -1,0 +1,36 @@
+<?pscript
+
+    function say_hello_trait() {
+        return client {
+            say_hello() {
+                console.log(
+                    this.who_am_i() + 
+                    " says - " +
+                    this.what_sound() +  
+                    "!"    
+                );
+            }
+        }
+    }
+?>
+
+client {
+    
+
+    class Animal {
+        $[say_hello_trait()]
+
+        who_am_i() {
+            return "Dog";
+        }
+
+        what_sound() {
+            return "Woof";
+        }
+
+        
+    }
+
+    const animal = new Animal();
+    animal.say_hello();
+}
