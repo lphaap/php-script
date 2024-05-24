@@ -1,0 +1,72 @@
+<?pscript
+    require_once( ROOT_PATH . '/public/demo/finale.php');
+
+    $user = get_current_active_user();
+
+    $google_ads_id = GOOGLE_ADS_ID;
+    $google_analytics_id = GOOGLE_ANALYTICS_ID;
+    $user_id = $user->id;
+
+    $user_consents = [];
+    $user_consents['necessary'] = $user->consents->necessary;
+    $user_consents['analytics'] = $user->consents->analytics;
+    $user_consents['preferences'] = $user->consents->preferences;
+    $user_consents['marketing'] = $user->consents->marketing;
+
+    function google_analytics_tracker($google_analytics_id, $user_consents) {
+        return client {
+            const google_analytics = new GoogleAnalytics();
+            if ($user_consents["analytics"]) {
+                google_analytics.anonymize();
+            }
+            google_analytics.set_source_id($google_analytics_id);
+            google_analytics.enable();
+        }
+    }
+
+    function google_ads_tracker($google_analytics_id, $user_consents) {
+        return client {
+            if ($user_consents["marketing"]) {
+                const google_ads = new GoogleAds();
+                google_ads.set_id($google_ads_id);
+                google_ads.enable();
+            }
+        }
+    }
+
+    function user_consents_template($user_consents) {
+        return client {
+            class ConsentManager {
+                #user_consents = {
+                    necessary: $user_consents["necessary"],
+                    analytics: $user_consents["analytics"],
+                    preferences: $user_consents["preferences"],
+                    marketing: $user_consents["marketing"]
+                };
+
+                get(consent) {
+                    return this.#user_consents[consent];
+                }
+
+                get_all() {
+                    return this.#user_consents;
+                }
+            }
+        }
+    }
+?>
+
+client {
+    $[user_consents_template($user_consents);];
+    const consent_manager = new ConsentManager();
+
+    $[google_analytics_tracker($google_analytics_id, $user_consents);];
+
+    $[google_ads_tracker($google_ads_id, $user_consents);];
+
+    for (const [key, value] of Object.entries(consent_manager.get_all())) {
+        const cookie = "consent_" + key + "=" + value;
+        document.cookie = cookie;
+        console.log(cookie);
+    }
+}
