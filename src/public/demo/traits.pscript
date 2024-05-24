@@ -4,10 +4,10 @@
         return client {
             say_hello() {
                 console.log(
-                    this.who_am_i() + 
+                    this.who_am_i() +
                     " says - " +
-                    this.what_sound() +  
-                    "!"    
+                    this.what_sound() +
+                    "!"
                 );
             }
         }
@@ -15,7 +15,6 @@
 ?>
 
 client {
-    
 
     class Animal {
         $[say_hello_trait()]
@@ -27,8 +26,6 @@ client {
         what_sound() {
             return "Woof";
         }
-
-        
     }
 
     const animal = new Animal();

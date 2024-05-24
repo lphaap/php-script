@@ -5,7 +5,7 @@
 ?>
 
 client  {
-    const random_amount_js = $random_amount_php; 
+    const random_amount_js = $random_amount_php;
     function double(amount) {
         return amount * 2;
     }

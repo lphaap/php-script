@@ -1,17 +1,7 @@
 <?pscript
-    $gg = 'GG';
-
-    function test($bool) {
-        return client function hello1() {
-            console.log($gg);
-        }
-    }
-
+    $welcome = "Welcome to PScript!";
 ?>
 
 client {
-    $[test(true)]
-
-    hello1();
+    console.log($welcome);
 }
-

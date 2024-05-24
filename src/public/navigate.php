@@ -2,7 +2,7 @@
 <h2>Select a demo:</h2>
 
 <ul>
-<?php 
+<?php
 foreach (scandir("public/demo/") as $name) {
         if (in_array($name, [".", ".."])) {
             continue;

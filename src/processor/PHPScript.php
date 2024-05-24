@@ -2,8 +2,6 @@
 
 namespace PScript;
 
-use Attribute;
-
 require_once('Context.php');
 require_once('PScriptVar.php');
 require_once('PScriptBlock.php');
@@ -22,21 +20,21 @@ class PScript {
 
         if (DEBUG) {
             echo
-            '</br>
-            <b>SOURCE:</b>
-            <pre style="">' .
-                htmlspecialchars($source) .
-            '</pre>'
-        ;
+                '</br>
+                <b>SOURCE:</b>
+                <pre style="">' .
+                    htmlspecialchars($source) .
+                '</pre>'
+            ;
 
-        echo
-            '</br>
-            <b>COMPILED:</b>
-            <pre style="">' .
-                htmlspecialchars($compiled) .
-            '</pre>
-            </br>'
-        ;
+            echo
+                '</br>
+                <b>COMPILED:</b>
+                <pre style="">' .
+                    htmlspecialchars($compiled) .
+                '</pre>
+                </br>'
+            ;
         }
     }
 
@@ -88,6 +86,18 @@ class PScript {
             '<?php',
             $pscript
         );
+
+
+        // Evaluate PHP import statements into the current context
+        preg_match_all(
+            "/(require_once|require|include|include_once)\s*\(\s*(.*?)\s*\);/",
+            $parsed_script,
+            $php_import_clauses
+        );
+
+        foreach ($php_import_clauses[0] as $import_clause) {
+            eval($import_clause);
+        }
 
         // Evaluate PHP expressions into the current context
         preg_match_all(
@@ -187,7 +197,6 @@ class PScript {
 
                 $block_index++;
             }
-
             eval(self::EVAL_NAMESPACE . $php_block);
         }
 
@@ -368,8 +377,8 @@ class PScript {
 
         if (is_array($value)) {
             $parsed_values = [];
-            foreach ($value as $sub_value) {
-                $parsed_values[] = $this->convert_variable($sub_value);
+            foreach ($value as $key => $sub_value) {
+                $parsed_values[$key] = $this->convert_variable($sub_value);
             }
             return "[" . implode(", ", $parsed_values) . "]";
         }
