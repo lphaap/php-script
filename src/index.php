@@ -1,7 +1,7 @@
 <?php
 
 define('ROOT_PATH', __DIR__);
-define('DEBUG', true);
+define('DEBUG', false);
 
 require_once(ROOT_PATH . "/Router.php");
 

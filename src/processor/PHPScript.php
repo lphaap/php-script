@@ -10,7 +10,7 @@ class PScript {
 
     public const PSCRIPT_CACHE = __DIR__ . "/__pscript_cache/";
 
-    private const CACHE_ENABLED = false;
+    private const CACHE_ENABLED = !DEBUG;
 
     private const EVAL_NAMESPACE = "namespace PScript; ";
 
@@ -18,24 +18,22 @@ class PScript {
         $source = file_get_contents($source_file_path);
         $compiled = file_get_contents($cache_file_path);
 
-        if (DEBUG) {
-            echo
-                '</br>
-                <b>SOURCE:</b>
-                <pre style="">' .
-                    htmlspecialchars($source) .
-                '</pre>'
-            ;
+        echo
+            '</br>
+            <b>SOURCE:</b>
+            <pre style="">' .
+                htmlspecialchars($source) .
+            '</pre>'
+        ;
 
-            echo
-                '</br>
-                <b>COMPILED:</b>
-                <pre style="">' .
-                    htmlspecialchars($compiled) .
-                '</pre>
-                </br>'
-            ;
-        }
+        echo
+            '</br>
+            <b>COMPILED:</b>
+            <pre style="">' .
+                htmlspecialchars($compiled) .
+            '</pre>
+            </br>'
+        ;
     }
 
     public static function require($source_file_path, $context = []) {

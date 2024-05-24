@@ -7,7 +7,7 @@ foreach (scandir("public/demo/") as $name) {
         if (in_array($name, [".", ".."])) {
             continue;
         }
-        if (!DEBUG && $name == "wip") {
+        if (!DEBUG && str_contains($name, "wip")) {
             continue;
         }
         $parsed_name = str_replace(".pscript", "", $name);
